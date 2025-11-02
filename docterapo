@@ -1,0 +1,953 @@
+{
+  "name": "docterapotele",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const store = this.getWorkflowStaticData('global');\nstore.modes = store.modes || {};\n\n// chatId را از چند جا امتحان می‌گیریم تا همیشه پر شود\nconst chatId =\n  $json.chatId ??\n  $json.message?.chat?.id ??\n  $('Set (normalize)').item.json.chatId; // نام نود را دقیقاً طبق بومت بگذار\n\nif (chatId && store.modes[chatId]) {\n  delete store.modes[chatId];\n}\n\nreturn [{ json: { chatId, cleared: true } }];\n"
+      },
+      "id": "c209c3f3-5a48-4707-a257-d06fe46c413b",
+      "name": "Code (clearModeStatic)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -832,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "dbd01489-e543-4d73-a8d4-9555dfab42ad",
+      "name": "Telegram Trigger1",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1504,
+        -48
+      ],
+      "webhookId": "59a6af1f-e115-4359-bf36-10b8b3f19810",
+      "credentials": {
+        "telegramApi": {
+          "id": "zS0guKfoiHnPek4o",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "chatId",
+              "value": "={{ $json.message.chat.id }}"
+            }
+          ],
+          "string": [
+            {
+              "name": "text",
+              "value": "={{ ($json.message.text || '').trim() }}"
+            }
+          ],
+          "boolean": [
+            {
+              "name": "isReset",
+              "value": "={{ /^\\/?(start|new)(?:@\\w+)?\\b/i.test($json.text || '') }}"
+            },
+            {
+              "name": "isModeText",
+              "value": "={{ /^\\/mode\\s+text\\b/i.test($json.text || '') }}"
+            },
+            {
+              "name": "isModeVoice",
+              "value": "={{ /^\\/mode\\s+voice\\b/i.test($json.text || '') }}"
+            },
+            {
+              "name": "isModeBoth",
+              "value": "={{ /^\\/mode\\s+both\\b/i.test($json.text || '') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "54e2e7e6-975e-4ece-bca2-257c495c90e8",
+      "name": "Set (normalize)1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1280,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "fb77d936-4203-492e-8845-c5653d650cb0",
+              "leftValue": "={{ $json.isReset }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "97af5b47-2332-4252-88fc-6ab97257eda5",
+      "name": "IF (Reset: /start|/new ?)1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1072,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Set (normalize)1').item.json.chatId }}",
+        "text": "Hi! I’m Miro. Please share the date and time, the doctor/department, your full name, and your email so I can send the confirmation. ",
+        "additionalFields": {}
+      },
+      "id": "7f8f07e7-e9df-4870-8783-86d0e8de28ce",
+      "name": "Telegram: Welcome1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -624,
+        -192
+      ],
+      "webhookId": "bd8cc878-5c5e-4584-89a1-e49ed393a68e",
+      "credentials": {
+        "telegramApi": {
+          "id": "zS0guKfoiHnPek4o",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "331f7641-7454-470b-a324-2311c66f368a",
+              "leftValue": "={{ !!$json.message?.voice || !!$json.message?.audio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3ffe3606-b808-420b-9d76-54ea11a92308",
+      "name": "IF (hasVoice?)1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "user_text",
+              "value": "={{ $json.content?.parts?.[0]?.text || '' }}"
+            }
+          ],
+          "number": [
+            {
+              "name": "chatId",
+              "value": "={{ $('Set (normalize)1').item.json.chatId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "991ce1ea-01e0-4711-8844-ed04405eaeb5",
+      "name": "Set (unify-voice)1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "user_text",
+              "value": "={{ $json.message?.text || $json.text || '' }}"
+            }
+          ],
+          "number": [
+            {
+              "name": "chatId",
+              "value": "={{ $('Set (normalize)1').item.json.chatId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c5134c8a-9b9f-431c-8d19-762cc3b79869",
+      "name": "Set (unify-text)1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "reply_text",
+              "value": "={{ $json.choices?.[0]?.message?.content || $json.output || $json.text || '' }}"
+            }
+          ],
+          "number": [
+            {
+              "name": "chatId",
+              "value": "={{ $('Telegram Trigger1').item.json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0730523c-0a15-4b29-8c40-67605290a7aa",
+      "name": "Set (prepare-reply)1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        576,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.reply_text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "e9601ec8-ae79-4f6d-be9b-1168cebe0e07",
+      "name": "Telegram: sendMessage1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        976,
+        400
+      ],
+      "webhookId": "29be67be-b103-4c21-932a-1b5bbb2d5d3e",
+      "credentials": {
+        "telegramApi": {
+          "id": "zS0guKfoiHnPek4o",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-exp",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-exp"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        208
+      ],
+      "id": "0063b8fd-dcec-46e9-8ebe-18798abd1c71",
+      "name": "Transcribe a recording2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2OHI1xgLHX52Y4y8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {
+          "mimeType": ""
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -736,
+        208
+      ],
+      "id": "dbc51016-cc0c-4e85-839f-156af9110de8",
+      "name": "Get a file",
+      "webhookId": "983156a8-9883-4dc8-b122-fce784dda5bc",
+      "credentials": {
+        "telegramApi": {
+          "id": "zS0guKfoiHnPek4o",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = items[0];\nconst bin = item.binary?.data || item.binary?.file || item.binary?.audio || {};\nconst ext = (bin.fileExtension || '').toLowerCase();\nif (ext === 'oga') { bin.fileExtension = 'ogg'; bin.mimeType = 'audio/ogg'; }\nelse if (!bin.mimeType && ext) { bin.mimeType = `audio/${ext}`; }\nitem.binary = { data: bin };\nreturn item;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        208
+      ],
+      "id": "a6fa39bd-d916-4afa-8e73-df6a28685f09",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.user_text }}",
+        "options": {
+          "systemMessage": "You are “Miro”, a friendly booking assistant on Telegram.\n\nOUTPUT RULES\n\nReply only in the same language the user used (if the user writes Persian, reply in Persian).\n\nPlain text only: no emojis, no markdown, no tags, no JSON, no meta or thinking.\n\nKeep replies 1–2 short sentences (هر جمله حداکثر ~25 کلمه).\n\nIf the user mixes languages, prefer Persian whenever there is Persian in the message.\n\nNever switch language unless the user asks you to.\n\nSCOPE & SLOTS\n\nCollect exactly these items: date, time, doctor OR department (prefer doctor if both provided), full name, email.\n\nDefault timezone: Asia/Tehran. Assume current year.\n\nUnderstand any natural date/time in Persian (e.g. «سه‌شنبه هفته بعد ساعت ۱۰»). If ambiguous, ask a very brief clarification.\n\nFLOW\n\nGreeting / empty or unclear start:\n\nVery briefly introduce yourself and state why you need the info (برای ثبت نوبت).\n\nIn یک جمله کوتاه همهٔ موارد لازم را بگو (تاریخ، ساعت، پزشک/بخش، نام کامل، ایمیل).\n\nدر جمله دوم فقط اولین آیتمِ لازم (تاریخ) را بپرس.\n\nIf some items are known:\n\nخیلی کوتاه بگو چه چیزهایی هنوز نداریم، و فقط آیتم بعدی را بپرس.\n\nهر بار یک دلیل کوتاه اضافه کن (مثلاً «برای ثبت دقیق» یا «برای تکمیل پرونده»).\n\nAmbiguity: اگر تاریخ/ساعت مبهم است، یک سؤال خیلی کوتاه برای شفاف‌سازی بپرس.\n\nAll info complete:\n\nیک خلاصهٔ یک‌خطی بده و تأیید بخواه (بله/خیر).\n\nاگر بله: تأیید و تمام.\n\nاگر خیر: محترمانه لغو کن و گزینهٔ جایگزین بخواه یا بگو هر زمان آماده بودید بفرمایید.\n\nOut of scope: خیلی کوتاه توضیح بده که وظیفهٔ تو رزرو نوبت است و با یک جمله بازگردان به روند رزرو.\n\nEXAMPLES (Persian style)\n\nFirst turn:\n«سلام! من میرو هستم. برای رزرو نوبت تاریخ، ساعت، نام پزشک یا بخش، نام کامل و ایمیل لازم است.\nبرای شروع، لطفاً تاریخ مدنظرتان را بفرمایید (برای ثبت دقیق).»\n\nAfter date only:\n«ممنون. برای ثبت دقیق، لطفاً ساعت را هم بفرمایید.»\n\nWith remaining items:\n«فعلاً [فهرست کوتاهِ مواردِ مانده، مثلاً: ساعت و ایمیل] را ندارم. لطفاً [آیتم بعدی] را بفرمایید (برای تکمیل پرونده).»\n\nSummary:\n«نوبت: [تاریخ] ساعت [ساعت] نزد [پزشک/بخش] به نام [نام کامل]. تأیید می‌فرمایید؟»\n\nYes:\n«عالی! نوبت برای [تاریخ] ساعت [ساعت] ثبت شد. اگر تغییری خواستید همین‌جا بفرمایید.»\n\nNo:\n«باشه، رزرو انجام نشد. اگر زمان دیگری مدنظرتان است بفرمایید تا تنظیم کنم.»\n\nDO NOT\n\nDo not output JSON, lists of keys, or internal reasoning.\n\nDo not use emojis/markdown.\n\nDo not ask multiple new items at once—always one missing item per turn.\n\nTIME RULE (Tehran):\n- “now” = current time in Asia/Tehran (Jalali).\n- “next week” = today + 7 days (نزدیک‌ترین هفته‌ی پیشِ رو، نه ماه‌های دور).\n- تاریخ‌های نسبی را فقط با روزِ هفته/روزِ ماه اعلام کن؛ نام ماه را نگو مگر کاربر خودش گفته باشد.\n- اگر ابهام بود، یک پرسش کوتاه برای تأیید بپرس («منظورتان هفته‌ی بعد از امروز است؟»).\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -48,
+        224
+      ],
+      "id": "661e9957-af44-4ce0-848e-51767b17bb83",
+      "name": "AI Agent3"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ String($('Telegram Trigger1').item.json.message.chat.id) }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        448
+      ],
+      "id": "45914e1a-da11-41fd-ab5b-6459d3291169",
+      "name": "Simple Memory3"
+    },
+    {
+      "parameters": {
+        "operation": "sendAudio",
+        "chatId": "={{ $('Telegram Trigger1').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1744,
+        640
+      ],
+      "id": "85e82d0e-6339-4801-8fd2-3a967c24eac4",
+      "name": "Send an audio file",
+      "webhookId": "31b5d6a3-0444-4eee-be14-9cfab323936e",
+      "credentials": {
+        "telegramApi": {
+          "id": "zS0guKfoiHnPek4o",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudflare.com/client/v4/accounts/1f580945b3c30d067a9199c7a5e5d44a/ai/run/@cf/myshell-ai/melotts",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Authorization\": \"Bearer klkQ2lmkfAXc_2OSyi2uZNQOuqpnJVe-QNZNBotW\",\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"prompt\": $json.text_out, \"format\": \"mp3\", \"speed\": 0.9 } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        640
+      ],
+      "id": "573b53f8-1cf2-45a4-9bb1-bde338ea9cae",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b64 = $json.result?.audio ?? $json.audio ?? null;\nif (!b64) {\n  return [{ json: { error: 'No audio base64 found', raw: $json } }];\n}\nconst raw = b64.startsWith('data:') ? b64.split(',')[1] : b64;\nconst buf = Buffer.from(raw, 'base64');\n\nreturn [{\n  json: {},\n  binary: {\n    data: {\n      data: buf,\n      fileName: `reply_${Date.now()}.mp3`,\n      mimeType: 'audio/mpeg'\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        640
+      ],
+      "id": "c43a8faa-d7bd-4c17-bdf9-b8f19df8caef",
+      "name": "Code9"
+    },
+    {
+      "parameters": {
+        "jsCode": "// --- Helpers ---\nconst toObj = (x) => {\n  if (!x) return {};\n  if (typeof x === 'string') {\n    // تلاش برای JSON؛ اگر نشد، به صورت متن ساده برمی‌گردانیم\n    try { return JSON.parse(x); } catch { return { text: x }; }\n  }\n  return x;\n};\n\nconst get = (obj, path, d = '') => {\n  try { return path.split('.').reduce((o,k)=>o?.[k], obj) ?? d; }\n  catch { return d; }\n};\n\nconst pickFirst = (...cands) => {\n  for (const c of cands) {\n    if (!c) continue;\n    if (typeof c === 'string' && c.trim()) return c.trim();\n    if (typeof c === 'object') {\n      // رایج‌ترین کلیدها\n      if (typeof c.text === 'string' && c.text.trim()) return c.text.trim();\n      if (typeof c.reply_text === 'string' && c.reply_text.trim()) return c.reply_text.trim();\n      if (typeof c.output === 'string' && c.output.trim()) return c.output.trim();\n      // خروجی شبیه OpenAI\n      const mm = get(c, 'choices.0.message.content', '');\n      if (mm) return String(mm).trim();\n      // شکل‌های دیگر\n      const m0 = get(c, 'messages.0.content', '');\n      if (m0) return String(m0).trim();\n    }\n    if (typeof c === 'string' && c.trim().startsWith('{')) {\n      try { const j = JSON.parse(c); const r = pickFirst(j); if (r) return r; } catch {}\n    }\n  }\n  return '';\n};\n\n// --- Parse current node payload only ---\nconst raw = $json ?? {};\nconst obj = toObj(raw);\n\n// TEXT برای تلگرام\nlet text = pickFirst(\n  obj, obj.text, obj.reply_text, obj.output,\n  get(obj,'data.text',''),\n  get(obj,'message.content',''),\n  get(obj,'messages.0.content',''),\n  get(obj,'choices.0.message.content',''),\n  typeof raw === 'string' ? raw : ''\n);\n\n// حذف بلاک‌های <think>…</think> اگر وجود داشت\ntext = String(text).replace(/<think>[\\s\\S]*?<\\/think>/gi,'').trim();\n\n// SPEAK برای TTS (اگر نبود، از text)\nlet speak = pickFirst(\n  obj.speak_en, obj.speak, get(obj,'voice',''), get(obj,'audio.prompt','')\n);\nif (!speak) speak = text;\n\n// تمیزکاری نهایی برای TTS\nspeak = String(speak).replace(/\\s+/g,' ').trim();\n\n// خروجی استاندارد\nreturn [{ json: { text, speak } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        608
+      ],
+      "id": "5242cb7f-b147-4fa2-9c32-0dfa9b1fa7a1",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        176,
+        464
+      ],
+      "id": "8365e143-9f41-4b76-8c71-73d030ba254b",
+      "name": "sendEmail3",
+      "webhookId": "347652a6-179f-4c68-8b7b-02bf61c0d282",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pkCsHjkXxQUtr9eB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.user_text }}",
+        "options": {
+          "systemMessage": "You are “Miro”, a booking assistant for medical appointments on Telegram.\n\nزبان و سبک\n- ببین دقت کن تکست را به زبان فارسی فقط و فقط فارسی نوشته شده باشد. لحن صمیمی، کوتاه و مؤدب. حداکثر ۱ ایموجی اختیاری.\n- هر پاسخ حتماً ۱–۲ جمله‌ی کوتاه باشد. بدون نشانه‌های فنی، تگ‌ها، یا توضیح فرایند.\n\nاسکوپ (پارامترها)\n- دقیقاً این موارد را برای رزرو جمع‌آوری کن: ۱) تاریخ، ۲) ساعت، ۳) نام پزشک یا واحد (ترجیح با پزشک)، ۴) نام کامل، ۵) ایمیل.\n- منطقه زمانی: Asia/Tehran. سال را سال جاری فرض کن.\n- ورودی هر زبانی را بفهم، اما همیشه پاسخ را فارسی بده. تاریخ‌های محاوره‌ای («سه‌شنبه هفته بعد ساعت ۱۰») را تفسیر کن.\n\nفلو (با اعلام همه‌ی پارامترها)\n- اگر پیام سلام/مبهم/شروع بود: در یک جمله خیلی کوتاه بگو «برای رزرو به این اطلاعات نیاز داریم: تاریخ، ساعت، نام پزشک یا واحد، نام کامل، ایمیل»؛ سپس همان‌جا اولین مورد (تاریخ) را بپرس.\n- اگر بعضی موارد را داریم: یک جمله‌ی کوتاه بگو «برای تکمیل رزرو به [مواردِ باقیمانده] نیاز دارم»؛ سپس فقط **یک** موردِ بعدی را بپرس.\n- وقتی همه‌ی موارد تکمیل شد: خلاصه‌ی یک‌خطی بده و تأیید (بله/خیر) بگیر.\n- اگر بله: ثبت را تأیید کن. اگر خیر: لغو و پیشنهاد کمک بعدی بده.\n- درخواست‌های خارج از رزرو را خیلی کوتاه پاسخ بده و به رزرو برگردان.\n\nنمونه‌ها\n- شروع/سلام: «سلام! برای رزرو این موارد لازم است: تاریخ، ساعت، نام پزشک یا واحد، نام کامل و ایمیل. اول تاریخ را بفرمایید. 😊»\n- پس از تاریخ: «ممنون، حالا ساعت را هم بفرمایید.»\n- وقتی چند مورد مانده: «برای تکمیل رزرو به [ساعت، ایمیل] نیاز دارم. لطفاً ساعت را بفرمایید.»\n- جمع‌بندی: «نوبت برای [تاریخ] ساعت [ساعت] نزد [دکتر/واحد] به نام [نام کامل]. تأیید می‌کنید؟»\n\nTIME RULE (Tehran):\n- “now” = current time in Asia/Tehran (Jalali).\n- “next week” = today + 7 days (نزدیک‌ترین هفته‌ی پیشِ رو، نه ماه‌های دور).\n- تاریخ‌های نسبی را فقط با روزِ هفته/روزِ ماه اعلام کن؛ نام ماه را نگو مگر کاربر خودش گفته باشد.\n- اگر ابهام بود، یک پرسش کوتاه برای تأیید بپرس («منظورتان هفته‌ی بعد از امروز است؟»).\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        688
+      ],
+      "id": "749c0004-7c10-463f-a837-8539010adaca",
+      "name": "AI Agent4"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ String($('Telegram Trigger1').item.json.message.chat.id) }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        960
+      ],
+      "id": "9f421b00-6c18-436f-be70-b48991c361d9",
+      "name": "Simple Memory4"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        944
+      ],
+      "id": "2d1762d6-0184-4894-8ff7-764e90a258fc",
+      "name": "sendEmail4",
+      "webhookId": "347652a6-179f-4c68-8b7b-02bf61c0d282",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pkCsHjkXxQUtr9eB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.reply_text }}",
+        "options": {
+          "systemMessage": "You translate any input to natural, simple English for TTS.\nOutput only one plain English sentence, without quotes, code fences, or explanations.\nNo Persian. No emojis. Max 120 characters.\n\nخروجی ات افکارت نباشه بلکه جواب درست باشه\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        640
+      ],
+      "id": "3de1679d-dcae-462d-b29e-2bd51c7fe542",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ String($('Telegram Trigger1').item.json.message.chat.id) }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        912
+      ],
+      "id": "517cf9c3-b4db-4470-b6e1-5ab2ace30c2d",
+      "name": "Simple Memory5"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Remove <think>...</think> and return a clean one-line English sentence.\n * Input may be in: output | text | choices[0].message.content | message.content\n */\nfunction pick(j){\n  return j?.output\n      ?? j?.text\n      ?? j?.choices?.[0]?.message?.content\n      ?? j?.message?.content\n      ?? '';\n}\n\nlet raw = String(pick($json) || '');\n\nlet clean = raw\n  .replace(/<think>[\\s\\S]*?<\\/think>/gi, '') // remove think blocks\n  .replace(/^[\\s\"'`]+|[\\s\"'`]+$/g, '')      // trim wrapping quotes\n  .replace(/\\s+/g, ' ')                     // collapse spaces\n  .trim();\n\n// کوتاه و امن برای TTS\nclean = clean.slice(0, 300);\n\nreturn [{ json: { speak_en: clean, text_out: clean } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        640
+      ],
+      "id": "83475453-6d2a-48fb-984f-5813355b3811",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        768,
+        864
+      ],
+      "id": "6ba8ced0-df8c-47c9-83fa-2d0356bcb2b0",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2OHI1xgLHX52Y4y8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        960
+      ],
+      "id": "a93c538a-f2b1-4bda-ab28-c25add5c8514",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2OHI1xgLHX52Y4y8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        464
+      ],
+      "id": "5e00bf86-ba61-4dc7-b213-1e5749c6b748",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2OHI1xgLHX52Y4y8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code (clearModeStatic)": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Welcome1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Set (normalize)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set (normalize)1": {
+      "main": [
+        [
+          {
+            "node": "IF (Reset: /start|/new ?)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF (Reset: /start|/new ?)1": {
+      "main": [
+        [
+          {
+            "node": "Code (clearModeStatic)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF (hasVoice?)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF (hasVoice?)1": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set (unify-text)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set (unify-voice)1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set (unify-text)1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set (prepare-reply)1": {
+      "main": [
+        [
+          {
+            "node": "Telegram: sendMessage1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording2": {
+      "main": [
+        [
+          {
+            "node": "Set (unify-voice)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent3": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory3": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Code9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code9": {
+      "main": [
+        [
+          {
+            "node": "Send an audio file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Set (prepare-reply)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sendEmail3": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent4": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory4": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sendEmail4": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory5": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "66004806-dfd4-411c-9bff-95b48fa5e265",
+  "meta": {
+    "instanceId": "76568b2e87b03c569c3bcd3ca5f38c52a174626ad1b9318aa6505a80b725e542"
+  },
+  "id": "1N39glIgJ2JzVFi8",
+  "tags": []
+}
